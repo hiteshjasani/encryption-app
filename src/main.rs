@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use iced::{
-    widget::{column, container, horizontal_rule, text, text_input}, Element, Font, Task
+    alignment::{Horizontal, Vertical}, color, widget::{column, container, horizontal_rule, row, text, text_input}, Element, Font, Task
 };
 use iced_modern_theme::Modern;
 
@@ -70,19 +70,22 @@ impl App {
     }
 
     fn view(&self) -> Element<Message> {
+        let icon = iced_font_awesome::fa_icon("folder-open").size(16.0).color(color!(249, 170, 51));
         let label = text("Enter directory:");
         let dir_input = text_input("Directory", self.directory.as_str())
             .style(Modern::text_input())
             .on_input(Message::DirectoryChanged)
             .width(600);
         let input_col = column!(
-            label,
+            row!(icon, label).spacing(10).align_y(Vertical::Center),
             dir_input
-        ).spacing(10);
+        )
+            .align_x(Horizontal::Left)
+            .spacing(10)
+            .padding(10);
         let input_ctr = container(input_col)
             .padding(10)
             .style(Modern::sheet_container());
-            // .style(container::rounded_box);
 
         let filecol = column(
             self.filelist
@@ -143,7 +146,7 @@ pub enum Error {
 mod foo {
     use std::path::PathBuf;
 
-    use iced::{alignment::Vertical, widget::{button, text, Row}, Element, Task};
+    use iced::{alignment::Vertical, widget::{button, text, Row, Space}, Element, Task};
     use iced_modern_theme::Modern;
     use tokio::{
         fs::File,
@@ -188,7 +191,15 @@ mod foo {
             }
             Message::Decrypt => {
                 println!("decrypt {}", file_meta.name);
-                Task::none()
+                Task::future(async move {
+                    Message::FileSystemUpdated
+                })
+            }
+            Message::Delete => {
+                println!("delete {}", file_meta.name);
+                Task::future(async move {
+                    Message::FileSystemUpdated
+                })
             }
             Message::FileSystemUpdated => {
                 Task::none()
@@ -225,7 +236,7 @@ mod foo {
         ]);
         let row = row.extend(
             if file_meta.is_file {
-                if is_encrypted(&file_meta.path) {
+                let mut children = if is_encrypted(&file_meta.path) {
                     vec![
                         button(text("encrypt"))
                             .style(Modern::blue_tinted_button())
@@ -243,7 +254,13 @@ mod foo {
                             .style(Modern::warning_button())
                             .into()
                     ]
-                }
+                };
+                children.push(Space::with_width(80).into());
+                children.push(button(text("delete"))
+                    .style(Modern::danger_button())
+                    .on_press(Message::Delete).into(),
+                );
+                children
             } else {
                 vec![]
             }
@@ -304,6 +321,7 @@ mod foo {
     pub enum Message {
         Encrypt,
         Decrypt,
+        Delete,
         FileSystemUpdated,
     }
 }
