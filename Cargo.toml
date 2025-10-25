@@ -1,0 +1,20 @@
+[package]
+name = "encryption-app"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+iced = { version = "0.13.1", features = ["highlighter", "tokio"] }
+# iced addl widgets
+iced_aw = "0.12.2"
+iced_font_awesome = "0.2.1"
+iced_modern_theme = "0.1.6"
+
+# https://crates.io/crates/iced_font_awesome
+# https://crates.io/crates/iced_toasts
+# https://crates.io/crates/iced_aw
+
+# rusty native file dialog
+rfd = "0.15.4"
+tokio = { version = "1.48.0", features = ["fs", "io-util", "rt-multi-thread"] }
