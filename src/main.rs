@@ -71,7 +71,7 @@ impl App {
         }
     }
 
-    fn view(&self) -> Element<Message> {
+    fn view(&self) -> Element<'_, Message> {
         let icon = ifa::fa_icon("folder-open").size(16.0).color(color!(249, 170, 51));
         let label = text("Enter directory:");
         let dir_input = text_input("Directory", self.directory.as_str())
@@ -162,7 +162,7 @@ pub enum Error {
 mod foo {
     use std::path::PathBuf;
 
-    use iced::{alignment::Vertical, color, widget::{button, row, text, Row, Space, Text}, Element, Task};
+    use iced::{alignment::Vertical, color, widget::{button, row, text, Space, Text}, Element, Task};
     use iced_font_awesome as ifa;
     use iced_modern_theme::Modern;
     use iced_optional_element_shim::to_elem;
@@ -225,7 +225,7 @@ mod foo {
         }
     }
 
-    pub fn view(file_meta: &FileMeta) -> Element<Message> {
+    pub fn view(file_meta: &FileMeta) -> Element<'_, Message> {
         let is_file = file_meta.is_file;
         let is_enc_file = is_file && is_encrypted(&file_meta.path);
         let is_key_file = is_file && is_keyfile(&file_meta.path);
