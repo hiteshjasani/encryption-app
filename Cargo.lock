@@ -972,6 +972,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "iced",
+ "iced-optional-element-shim",
  "iced_aw",
  "iced_font_awesome",
  "iced_modern_theme",
@@ -1537,6 +1538,14 @@ dependencies = [
  "iced_widget",
  "iced_winit",
  "thiserror 1.0.69",
+]
+
+[[package]]
+name = "iced-optional-element-shim"
+version = "0.1.0"
+source = "git+https://github.com/hiteshjasani/iced-optional-element-shim.git?rev=bbf6d78#bbf6d78101e31ffc8116574c7694fdd00f6265d6"
+dependencies = [
+ "iced",
 ]
 
 [[package]]

@@ -1,14 +1,12 @@
 use std::path::PathBuf;
 
 use iced::{
-    alignment::{Horizontal, Vertical}, color, widget::{column, container, horizontal_rule, row, text, text_input}, Element, Font, Task
+    alignment::{Horizontal, Vertical}, color, widget::{column, container, horizontal_rule, row, text, Text, text_input}, Element, Font, Task
 };
 use iced_modern_theme::Modern;
+use iced_optional_element_shim::to_elem;
 
-mod iced_missing;
 use foo::FileMeta;
-
-use crate::iced_missing::to_elem;
 
 fn main() -> iced::Result {
     iced::application("encryption-app", App::update, App::view)
@@ -106,12 +104,12 @@ impl App {
             if true {
                 to_elem(Some(text(format!("if true succeeded"))))
             } else {
-                to_elem::<Message, iced::widget::Text>(None)
+                to_elem::<Message, Text>(None)
             },
             if false {
                 to_elem(Some(text(format!("if false failed"))))
             } else {
-                to_elem::<Message, iced::widget::Text>(None)
+                to_elem::<Message, Text>(None)
             },
 
 
@@ -163,8 +161,9 @@ pub enum Error {
 mod foo {
     use std::path::PathBuf;
 
-    use iced::{alignment::Vertical, widget::{button, text, Row, Space}, Element, Task};
+    use iced::{alignment::Vertical, widget::{button, row, text, Row, Space, Text}, Element, Task};
     use iced_modern_theme::Modern;
+    use iced_optional_element_shim::to_elem;
     use tokio::{
         fs::File,
         io::AsyncWriteExt,
@@ -225,78 +224,43 @@ mod foo {
     }
 
     pub fn view(file_meta: &FileMeta) -> Element<Message> {
-        let row = Row::new();
-        // let row = row.push(text(&file_meta.name).width(120))
-        //     .push(text(file_meta.type_as_str()).width(50));
-        // let row = if file_meta.is_file {
-        //     row.push(button(text("encrypt")).on_press(Message::Encrypt))
-        //         .push(button(text("decrypt")).on_press(Message::Decrypt))
-        // } else { row };
-        // row.spacing(10).into()
+        let is_file = file_meta.is_file;
+        let is_enc_file = is_file && is_encrypted(&file_meta.path);
+        row!(
+            text(&file_meta.name).width(180),
+            text(file_meta.type_as_str()).width(50),
 
-        // let row = if file_meta.is_file {
-        //     if is_encrypted(&file_meta.path) {
-        //         // row.push(fa_icon("circle-user").into::<Element<'_, Message>>())
-        //         // row.push(Into::<Element<'_, Message>>::into(fa_icon("circle-user")))
-        //         row.push(fa_iced::iced_text_icon_regular::<Message>(fa_iced::FA_ICON_USER, 32))
-        //     } else {
-        //         // row.push(fa_icon("medal").into())
-        //         row.push(fa_iced::iced_text_icon_regular::<Message>(fa_iced::FA_ICON_USER, 32))
-        //     }
-        // } else {
-        //     row
-        // };
-
-        let row = row.extend([
-            text(&file_meta.name).width(180).into(),
-            text(file_meta.type_as_str()).width(50).into()
-        ]);
-        let row = row.extend(
-            if file_meta.is_file {
-                let mut children = if is_encrypted(&file_meta.path) {
-                    vec![
-                        button(text("encrypt"))
-                            .style(Modern::blue_tinted_button())
-                            .into(),
-                        button(text("decrypt"))
-                            .style(Modern::warning_button())
-                            .on_press(Message::Decrypt).into()
-                    ]
-                } else {
-                    vec![
-                        button(text("encrypt"))
-                            .style(Modern::primary_button())
-                            .on_press(Message::Encrypt).into(),
-                        button(text("decrypt"))
-                            .style(Modern::warning_button())
-                            .into()
-                    ]
-                };
-                children.push(Space::with_width(80).into());
-                children.push(button(text("delete"))
-                    .style(Modern::danger_button())
-                    .on_press(Message::Delete).into(),
-                );
-                children
+            if is_enc_file {
+                to_elem(Some(button(text("encrypt"))
+                    .style(Modern::blue_tinted_button())))
             } else {
-                vec![]
+                to_elem(Some(button(text("encrypt"))
+                    .style(Modern::primary_button())
+                    .on_press(Message::Encrypt)))
+            },
+
+            if is_enc_file {
+                to_elem(Some(button(text("decrypt"))
+                    .style(Modern::warning_button())
+                    .on_press(Message::Decrypt)))
+            } else {
+                to_elem(Some(button(text("decrypt"))
+                    .style(Modern::warning_button())))
+            },
+
+            if is_file {
+                row!(
+                    Space::with_width(80),
+                    button(text("delete"))
+                        .style(Modern::danger_button())
+                        .on_press(Message::Delete)
+                )
+            } else {
+                row!(to_elem::<Message, Text>(None))
             }
-        );
-        // let conditional = if file_meta.is_file {
-        //     vec![button(text("encrypt")).on_press(Message::Encrypt).into(),
-        //         button(text("decrypt")).on_press(Message::Decrypt).into()]
-        // } else { vec![] };
-        // row.extend(conditional)
-        row
+        )
             .align_y(Vertical::Center)
             .spacing(10).into()
-
-        // row!(
-        //     text(&file_meta.name).width(120),
-        //     text(file_meta.type_as_str()).width(50),
-        //     button(text("encrypt")).on_press(Message::Encrypt),
-        //     button(text("decrypt")).on_press(Message::Decrypt)
-        // ).spacing(10).into()
     }
 
     fn gen_encrypted_filename(pb: &PathBuf) -> PathBuf {

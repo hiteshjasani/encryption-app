@@ -10,6 +10,7 @@ iced = { version = "0.13.1", features = ["highlighter", "tokio"] }
 iced_aw = "0.12.2"
 iced_font_awesome = "0.2.1"
 iced_modern_theme = "0.1.6"
+iced-optional-element-shim = { git = "https://github.com/hiteshjasani/iced-optional-element-shim.git", rev = "bbf6d78" }
 
 # https://crates.io/crates/iced_font_awesome
 # https://crates.io/crates/iced_toasts
