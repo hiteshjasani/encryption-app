@@ -1542,8 +1542,9 @@ dependencies = [
 
 [[package]]
 name = "iced-optional-element-shim"
-version = "0.1.0"
-source = "git+https://github.com/hiteshjasani/iced-optional-element-shim.git?rev=bbf6d78#bbf6d78101e31ffc8116574c7694fdd00f6265d6"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a84f20d9f263f86491be56ad67223acd416a1343f6689e6e7fa885dbe0f3a3bd"
 dependencies = [
  "iced",
 ]
