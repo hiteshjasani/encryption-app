@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use iced::{
     alignment::{Horizontal, Vertical}, color, widget::{column, container, horizontal_rule, row, scrollable, text, text_input, Text}, Element, Font, Task
 };
+use iced_font_awesome as ifa;
 use iced_modern_theme::Modern;
 use iced_optional_element_shim::to_elem;
 
@@ -71,7 +72,7 @@ impl App {
     }
 
     fn view(&self) -> Element<Message> {
-        let icon = iced_font_awesome::fa_icon("folder-open").size(16.0).color(color!(249, 170, 51));
+        let icon = ifa::fa_icon("folder-open").size(16.0).color(color!(249, 170, 51));
         let label = text("Enter directory:");
         let dir_input = text_input("Directory", self.directory.as_str())
             .style(Modern::text_input())
@@ -161,7 +162,8 @@ pub enum Error {
 mod foo {
     use std::path::PathBuf;
 
-    use iced::{alignment::Vertical, widget::{button, row, text, Row, Space, Text}, Element, Task};
+    use iced::{alignment::Vertical, color, widget::{button, row, text, Row, Space, Text}, Element, Task};
+    use iced_font_awesome as ifa;
     use iced_modern_theme::Modern;
     use iced_optional_element_shim::to_elem;
     use tokio::{
@@ -226,8 +228,19 @@ mod foo {
     pub fn view(file_meta: &FileMeta) -> Element<Message> {
         let is_file = file_meta.is_file;
         let is_enc_file = is_file && is_encrypted(&file_meta.path);
+        let is_key_file = is_file && is_keyfile(&file_meta.path);
+
         row!(
-            text(&file_meta.name).width(180),
+            if is_enc_file {
+                to_elem(Some(ifa::fa_icon_solid("lock").size(16.0).color(color!(255, 0, 0))))
+            } else if is_key_file {
+                to_elem(Some(ifa::fa_icon_solid("key").size(16.0).color(color!(0, 255, 0))))
+            } else {
+                to_elem(Some(ifa::fa_icon_solid("lock-open").size(16.0)))
+                // to_elem(Some(Space::with_width(16)))
+                // to_elem::<Message, Text>(None)
+            },
+            text(&file_meta.name).width(300),
             text(file_meta.type_as_str()).width(50),
 
             if is_enc_file {
@@ -283,6 +296,14 @@ mod foo {
     fn is_encrypted(pb: &PathBuf) -> bool {
         if let Some(file_stem) = pb.file_stem() {
             file_stem.display().to_string().ends_with("_enc")
+        } else {
+            false
+        }
+    }
+
+    fn is_keyfile(pb: &PathBuf) -> bool {
+        if let Some(file_stem) = pb.file_stem() {
+            file_stem.display().to_string().ends_with("_key")
         } else {
             false
         }
