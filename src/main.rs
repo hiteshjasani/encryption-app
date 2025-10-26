@@ -5,7 +5,10 @@ use iced::{
 };
 use iced_modern_theme::Modern;
 
+mod iced_missing;
 use foo::FileMeta;
+
+use crate::iced_missing::to_elem;
 
 fn main() -> iced::Result {
     iced::application("encryption-app", App::update, App::view)
@@ -34,7 +37,7 @@ impl App {
     fn new() -> (Self, Task<Message>) {
         (
             Self {
-                directory: String::from("temp_run"),
+                directory: String::from("/tmp"),
                 filelist: Vec::new(),
             },
             Task::done(Message::RefreshList)
@@ -98,6 +101,20 @@ impl App {
         ).spacing(10);
         column!(
             input_ctr,
+            horizontal_rule(2),
+
+            if true {
+                to_elem(Some(text(format!("if true succeeded"))))
+            } else {
+                to_elem::<Message, iced::widget::Text>(None)
+            },
+            if false {
+                to_elem(Some(text(format!("if false failed"))))
+            } else {
+                to_elem::<Message, iced::widget::Text>(None)
+            },
+
+
             horizontal_rule(2),
             filecol
         )
