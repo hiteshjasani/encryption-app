@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use iced::{
-    alignment::{Horizontal, Vertical}, color, widget::{column, container, horizontal_rule, row, text, Text, text_input}, Element, Font, Task
+    alignment::{Horizontal, Vertical}, color, widget::{column, container, horizontal_rule, row, scrollable, text, text_input, Text}, Element, Font, Task
 };
 use iced_modern_theme::Modern;
 use iced_optional_element_shim::to_elem;
@@ -114,7 +114,7 @@ impl App {
 
 
             horizontal_rule(2),
-            filecol
+            scrollable(filecol)
         )
         .padding(30)
         .spacing(20)
@@ -253,7 +253,8 @@ mod foo {
                     Space::with_width(80),
                     button(text("delete"))
                         .style(Modern::danger_button())
-                        .on_press(Message::Delete)
+                        .on_press(Message::Delete),
+                    Space::with_width(30)
                 )
             } else {
                 row!(to_elem::<Message, Text>(None))
