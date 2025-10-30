@@ -6,10 +6,24 @@ use iced::{
 use iced_font_awesome as ifa;
 use iced_modern_theme::Modern;
 use iced_optional_element_shim::to_elem;
+use tracing::{info, Level};
+use tracing_subscriber::FmtSubscriber;
 
 use foo::FileMeta;
 
+mod crypto;
+
 fn main() -> iced::Result {
+    let subscriber = FmtSubscriber::builder()
+        // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
+        // will be written to stdout.
+        .with_max_level(Level::INFO)
+        // completes the builder.
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber)
+        .expect("setting default subscriber failed");
+
     iced::application("encryption-app", App::update, App::view)
         .theme(|_app| iced_modern_theme::Modern::dark_theme())
         // .theme(|_app| Theme::SolarizedDark)
