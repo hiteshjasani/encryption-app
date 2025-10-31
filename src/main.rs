@@ -34,7 +34,7 @@ fn main() -> iced::Result {
 }
 
 struct App {
-    directory: String,
+    directory: PathBuf,
     filelist: Vec<FileMeta>,
 }
 
@@ -42,6 +42,7 @@ struct App {
 enum Message {
     RefreshList,
     DirectoryChanged(String),
+    DirectoryDown(String),
     FileList(Result<Vec<FileMeta>, Error>),
     Action(usize, foo::Message),
 }
@@ -50,7 +51,7 @@ impl App {
     fn new() -> (Self, Task<Message>) {
         (
             Self {
-                directory: String::from("/tmp"),
+                directory: PathBuf::from("/tmp"),
                 filelist: Vec::new(),
             },
             Task::done(Message::RefreshList)
@@ -60,11 +61,15 @@ impl App {
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::RefreshList => {
-                Task::perform(list_files(PathBuf::from(self.directory.as_str())),
+                Task::perform(list_files(self.directory.clone()),
                 Message::FileList)
             }
             Message::DirectoryChanged(new_dir) => {
-                self.directory = new_dir;
+                self.directory = PathBuf::from(new_dir);
+                Task::done(Message::RefreshList)
+            }
+            Message::DirectoryDown(new_dir) => {
+                self.directory.push(new_dir);
                 Task::done(Message::RefreshList)
             }
             Message::FileList(result) => {
@@ -77,7 +82,15 @@ impl App {
             Message::Action(index, fm_message) => {
                 if let Some(filemeta) = self.filelist.get_mut(index) {
                     foo::update(filemeta, fm_message)
-                        .then(|_| Task::done(Message::RefreshList))
+                        .then(|fm_msg| {
+                            match fm_msg {
+                                foo::Message::LinkClicked(url) => {
+                                    info!("Should be changing dir to {}", url);
+                                    Task::done(Message::DirectoryDown(url))
+                                }
+                                _ => Task::done(Message::RefreshList)
+                            }
+                        })
                 } else {
                     Task::none()
                 }
@@ -88,7 +101,7 @@ impl App {
     fn view(&self) -> Element<'_, Message> {
         let icon = ifa::fa_icon("folder-open").size(16.0).color(color!(249, 170, 51));
         let label = text("Enter directory:");
-        let dir_input = text_input("Directory", self.directory.as_str())
+        let dir_input = text_input("Directory", self.directory.to_str().unwrap_or_else(|| "."))
             .style(Modern::text_input())
             .on_input(Message::DirectoryChanged)
             .width(600);
@@ -239,7 +252,10 @@ mod foo {
             }
             Message::LinkClicked(url) => {
                 info!("Clicked link to {}", &url);
-                Task::none()
+                // wrap message in task so parent can process event
+                Task::future(async move {
+                    Message::LinkClicked(url)
+                })
             }
         }
     }
