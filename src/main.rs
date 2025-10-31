@@ -52,7 +52,7 @@ impl App {
     fn new() -> (Self, Task<Message>) {
         (
             Self {
-                directory: PathBuf::from("/tmp"),
+                directory: std::env::current_dir().unwrap_or_else(|_e| PathBuf::from(".")),
                 filelist: Vec::new(),
             },
             Task::done(Message::RefreshList)
