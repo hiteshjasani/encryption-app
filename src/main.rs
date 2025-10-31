@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use iced::{
-    alignment::{Horizontal, Vertical}, color, widget::{column, container, horizontal_rule, row, scrollable, text, text_input, Text}, Element, Font, Task
+    alignment::{Horizontal, Vertical}, color, widget::{button, column, container, horizontal_rule, row, scrollable, text, text_input, Text}, Element, Font, Task
 };
 use iced_font_awesome as ifa;
 use iced_modern_theme::Modern;
@@ -43,6 +43,7 @@ enum Message {
     RefreshList,
     DirectoryChanged(String),
     DirectoryDown(String),
+    DirectoryUp,
     FileList(Result<Vec<FileMeta>, Error>),
     Action(usize, foo::Message),
 }
@@ -70,6 +71,10 @@ impl App {
             }
             Message::DirectoryDown(new_dir) => {
                 self.directory.push(new_dir);
+                Task::done(Message::RefreshList)
+            }
+            Message::DirectoryUp => {
+                self.directory.pop();
                 Task::done(Message::RefreshList)
             }
             Message::FileList(result) => {
@@ -107,7 +112,10 @@ impl App {
             .width(600);
         let input_col = column!(
             row!(icon, label).spacing(10).align_y(Vertical::Center),
-            dir_input
+            row!(
+                button(ifa::fa_icon_solid("arrow-up").size(16.0)).on_press(Message::DirectoryUp),
+                dir_input
+            ).spacing(10).align_y(Vertical::Center)
         )
             .align_x(Horizontal::Left)
             .spacing(10)
