@@ -176,7 +176,7 @@ pub enum Error {
 mod foo {
     use std::path::PathBuf;
 
-    use iced::{alignment::Vertical, color, widget::{button, row, text, Space, Text}, Element, Task};
+    use iced::{alignment::Vertical, color, widget::{button, rich_text, row, span, text, Space, Text}, Element, Task};
     use iced_font_awesome as ifa;
     use iced_modern_theme::Modern;
     use iced_optional_element_shim::to_elem;
@@ -184,6 +184,7 @@ mod foo {
         fs::File,
         io::AsyncWriteExt,
     };
+    use tracing::info;
 
     #[allow(dead_code)]
     #[derive(Debug, Clone, Default)]
@@ -236,13 +237,33 @@ mod foo {
             Message::FileSystemUpdated => {
                 Task::none()
             }
+            Message::LinkClicked(url) => {
+                info!("Clicked link to {}", &url);
+                Task::none()
+            }
         }
     }
 
     pub fn view(file_meta: &FileMeta) -> Element<'_, Message> {
         let is_file = file_meta.is_file;
+        let is_dir = file_meta.is_dir;
+        let is_symlink = file_meta.is_symlink;
         let is_enc_file = is_file && is_encrypted(&file_meta.path);
         let is_key_file = is_file && is_keyfile(&file_meta.path);
+        let text_color = if is_dir {
+                Some(color!(80, 80, 255))
+            } else if is_symlink {
+                Some(color!(255, 255, 0))
+            } else if is_file {
+                Some(color!(200, 200, 200))
+            } else {
+                None
+            };
+        let link = if is_dir {
+            Some(file_meta.name.clone())
+        } else {
+            None
+        };
 
         row!(
             if is_enc_file {
@@ -254,7 +275,11 @@ mod foo {
                 // to_elem(Some(Space::with_width(16)))
                 // to_elem::<Message, Text>(None)
             },
-            text(&file_meta.name).width(300),
+
+            // Display file or directory name
+            // text(&file_meta.name).width(300),
+            rich_text([span(&file_meta.name).color_maybe(text_color).link_maybe(link.map(Message::LinkClicked)).into()]).width(300),
+
             text(file_meta.type_as_str()).width(50),
 
             if is_enc_file {
@@ -264,12 +289,14 @@ mod foo {
                 to_elem(Some(button(text("encrypt"))
                     .style(Modern::primary_button())
                     .on_press(Message::Encrypt)))
+                    // .on_press(Some(Message::Encrypt))))
             },
 
             if is_enc_file {
                 to_elem(Some(button(text("decrypt"))
                     .style(Modern::warning_button())
                     .on_press(Message::Decrypt)))
+                    // .on_press(Some(Message::Decrypt))))
             } else {
                 to_elem(Some(button(text("decrypt"))
                     .style(Modern::warning_button())))
@@ -281,10 +308,12 @@ mod foo {
                     button(text("delete"))
                         .style(Modern::danger_button())
                         .on_press(Message::Delete),
+                        // .on_press(Some(Message::Delete)),
                     Space::with_width(30)
                 )
             } else {
                 row!(to_elem::<Message, Text>(None))
+                // row!(to_elem::<Option<Message>, Text>(None))
             }
         )
             .align_y(Vertical::Center)
@@ -340,6 +369,7 @@ mod foo {
         Decrypt,
         Delete,
         FileSystemUpdated,
+        LinkClicked(String),
     }
 }
 
