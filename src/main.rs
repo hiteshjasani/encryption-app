@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use iced::{
-    alignment::{Horizontal, Vertical}, color, widget::{button, column, container, horizontal_rule, row, scrollable, text, text_input, Text}, Element, Font, Task
+    Element, Font, Length, Task, alignment::{Horizontal, Vertical}, color, widget::{Text, button, column, container, horizontal_rule, row, scrollable, text, text_input}
 };
 use iced_font_awesome as ifa;
 use iced_modern_theme::Modern;
@@ -150,7 +150,7 @@ impl App {
 
 
             horizontal_rule(2),
-            scrollable(filecol)
+            scrollable(filecol).width(Length::Fill)
         )
         .padding(30)
         .spacing(20)
@@ -197,6 +197,7 @@ pub enum Error {
 mod foo {
     use std::path::PathBuf;
 
+    use iced::advanced::Widget;
     use iced::{alignment::Vertical, color, widget::{button, rich_text, row, span, text, Space, Text}, Element, Task};
     use iced_font_awesome as ifa;
     use iced_modern_theme::Modern;
@@ -294,9 +295,14 @@ mod foo {
                 to_elem(Some(ifa::fa_icon_solid("lock").size(16.0).color(color!(255, 0, 0))))
             } else if is_key_file {
                 to_elem(Some(ifa::fa_icon_solid("key").size(16.0).color(color!(0, 255, 0))))
-            } else {
+            } else if is_file {
                 to_elem(Some(ifa::fa_icon_solid("lock-open").size(16.0)))
                 // to_elem(Some(Space::with_width(16)))
+                // to_elem::<Message, Text>(None)
+            } else if is_dir {
+                to_elem(Some(ifa::fa_icon("folder-open").size(16.0)))
+            } else {
+                to_elem(Some(Space::with_width(16)))
                 // to_elem::<Message, Text>(None)
             },
 
