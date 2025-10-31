@@ -20,6 +20,7 @@ const NONCE_LEN_BYTES: usize = 12;
 #[allow(dead_code)]
 const TAG_LEN_BYTES: usize = 16;
 /// padding needed for encrypted aes data keys
+#[allow(dead_code)]
 const PADDING_FOR_SHAMIR_60: &'static str = "00000000";
 
 
@@ -49,6 +50,7 @@ const PADDING_FOR_SHAMIR_60: &'static str = "00000000";
 /// Returns four arrays for the key (32 byte) and one for the encrypted data
 /// Returns four arrays  - array 0 is the first 8 bytes of the key, array 1 is the second 8 bytes
 /// Each array is the points (shares) for a portion of the AES-256 key
+#[allow(dead_code)]
 pub fn shamir_encrypt_embed_nonce(data: &[u8], n_shares: u16, k_thres: u16) -> anyhow::Result<(Vec<Point>, Vec<Point>, Vec<Point>, Vec<Point>, Vec<u8>)> {
   // Get 32 byte (256 bit) aes key
   let (aes_key, enc_data) = symmetric_encrypt_embed_nonce(data)?;
@@ -76,6 +78,7 @@ pub fn shamir_encrypt_embed_nonce(data: &[u8], n_shares: u16, k_thres: u16) -> a
   Ok((shares0, shares1, shares2, shares3, enc_data))
 }
 
+#[allow(dead_code)]
 pub fn shamir_decrypt_embed_nonce(data: &[u8], _n_shares: u16, _k_thres: u16,
   shares0: Vec<Point>, shares1: Vec<Point>, shares2: Vec<Point>, shares3: Vec<Point>)
    -> anyhow::Result<Vec<u8>> {
@@ -105,6 +108,7 @@ pub fn shamir_decrypt_embed_nonce(data: &[u8], _n_shares: u16, _k_thres: u16,
 
 /// Encrypt content with aes data key and then break into shamir shares (multi-part key)
 /// Each array is the points (shares) for a portion of the AES-256 key
+#[allow(dead_code)]
 pub fn shamir_encrypt_embed_nonce_60_bytes(data: &[u8], n_shares: u16, k_thres: u16) -> anyhow::Result<(Vec<MultiPartyKey8Points>, Vec<u8>)> {
   // Get 32 byte (256 bit) aes key
   let (aes_key, enc_data) = symmetric_encrypt_embed_nonce(data)?;
@@ -170,6 +174,7 @@ pub fn shamir_encrypt_embed_nonce_60_bytes(data: &[u8], n_shares: u16, k_thres: 
 }
 
 /// Combine shamir shares (multi-part key), decrypt aes data key and then content
+#[allow(dead_code)]
 pub fn shamir_decrypt_embed_nonce_60_bytes(data: &[u8], _n_shares: u16, _k_thres: u16, keys: Vec<MultiPartyKey8Points>) -> anyhow::Result<Vec<u8>> {
   let mut shares0 = Vec::new();
   let mut shares1 = Vec::new();
@@ -409,6 +414,7 @@ pub struct MultiPartyKey8Points {
   pub p7: Point,
 }
 
+#[allow(dead_code)]
 impl MultiPartyKey8Points {
   // chunk size is expect to be sizeof(Point)
   pub fn encode(&self, chunk_size: usize) -> Vec<u8> {

@@ -197,7 +197,6 @@ pub enum Error {
 mod foo {
     use std::path::PathBuf;
 
-    use iced::advanced::Widget;
     use iced::{alignment::Vertical, color, widget::{button, rich_text, row, span, text, Space, Text}, Element, Task};
     use iced_font_awesome as ifa;
     use iced_modern_theme::Modern;
