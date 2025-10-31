@@ -215,7 +215,7 @@ mod foo {
         match message {
             Message::Encrypt => {
                 let enc_filename = gen_encrypted_filename(&file_meta.path);
-                println!("encrypting {} to {}", file_meta.name, enc_filename.display());
+                info!("encrypting {} to {}", file_meta.name, enc_filename.display());
                 Task::future(async move {
                     let _ = write_file(&enc_filename, "hello world encrypted").await;
                     Message::FileSystemUpdated
@@ -223,13 +223,13 @@ mod foo {
                 })
             }
             Message::Decrypt => {
-                println!("decrypt {}", file_meta.name);
+                info!("decrypt {}", file_meta.name);
                 Task::future(async move {
                     Message::FileSystemUpdated
                 })
             }
             Message::Delete => {
-                println!("delete {}", file_meta.name);
+                info!("delete {}", file_meta.name);
                 Task::future(async move {
                     Message::FileSystemUpdated
                 })
