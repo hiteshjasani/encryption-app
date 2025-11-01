@@ -12,6 +12,7 @@ use tracing_subscriber::FmtSubscriber;
 use foo::FileMeta;
 
 mod crypto;
+mod tools;
 
 fn main() -> iced::Result {
     let subscriber = FmtSubscriber::builder()
@@ -211,6 +212,7 @@ mod foo {
     use tracing::{error, info};
 
     use crate::crypto;
+    use crate::tools;
     
     #[allow(dead_code)]
     #[derive(Debug, Clone, Default)]
@@ -432,21 +434,16 @@ mod foo {
         } else {
             None
         };
-        let bg_color = if index % 2 == 0 {
-            color!(10, 10, 25)
-        } else {
-            color!(10, 25, 10)
-        };
         let style0 = |_theme: &'_ Theme| container::Style::default();
-        let style1 = |_theme: &'_ Theme| container::Style {
-            background: Some(Background::Color(color!(10, 10, 10))),
+        let style1 = |theme: &'_ Theme| container::Style {
+            background: Some(Background::Color(tools::color::offset_color(theme.palette().background, 10))),
             // ... other styling properties
             ..Default::default()
         };
         let use_style = if index % 2 == 0 {
-            style0
-        } else {
             style1
+        } else {
+            style0
         };
 
         container(
@@ -531,11 +528,6 @@ mod foo {
         .width(Length::Fill)
         .padding(5)
         .style(use_style)
-        // .style(move |_theme| container::Style {
-        //     background: Some(Background::Color(bg_color)),
-        //     // ... other styling properties
-        //     ..Default::default()
-        // })
         .into()
     }
 
