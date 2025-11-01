@@ -127,12 +127,14 @@ impl App {
         let filecol = column(
             self.filelist
                 .iter()
-                .map(foo::view)
                 .enumerate()
-                .map(|(index, filemeta)| {
-                    filemeta.map(move |message| Message::Action(index, message))
+                .map(|(idx, x)| foo::view2(idx, x))
+                .enumerate()
+                .map(|(index, elem)| {
+                    elem
+                        .map(move |message| Message::Action(index, message))
                 })
-        ).spacing(10);
+        );
         column!(
             input_ctr,
             horizontal_rule(2),
@@ -198,7 +200,7 @@ mod foo {
     use std::path::PathBuf;
 
     use anyhow::Context;
-    use iced::{alignment::Vertical, color, widget::{button, column, rich_text, row, span, text, Space, Text}, Element, Task};
+    use iced::{Background, Color, Element, Length, Task, alignment::Vertical, color, widget::{Space, Text, button, column, container, rich_text, row, span, text}};
     use iced_font_awesome as ifa;
     use iced_modern_theme::Modern;
     use iced_optional_element_shim::to_elem;
@@ -406,7 +408,123 @@ mod foo {
             }
         )
             .align_y(Vertical::Center)
-            .spacing(10).into()
+            .spacing(10)
+            .into()
+    }
+
+    pub fn view2(index: usize, file_meta: &FileMeta) -> Element<'_, Message> {
+        let is_file = file_meta.is_file;
+        let is_dir = file_meta.is_dir;
+        let is_symlink = file_meta.is_symlink;
+        let is_enc_file = is_file && is_encrypted(&file_meta.path);
+        let is_key_file = is_file && is_keyfile(&file_meta.path);
+        let text_color = if is_dir {
+                Some(color!(80, 80, 255))
+            } else if is_symlink {
+                Some(color!(255, 255, 0))
+            } else if is_file {
+                Some(color!(200, 200, 200))
+            } else {
+                None
+            };
+        let link = if is_dir {
+            Some(file_meta.name.clone())
+        } else {
+            None
+        };
+        let bg_color = if index % 2 == 0 {
+            color!(10, 10, 25)
+        } else {
+            color!(10, 25, 10)
+        };
+
+        container(
+            row!(
+                column!(
+                    if is_enc_file {
+                        to_elem(Some(ifa::fa_icon_solid("lock").size(16.0).color(color!(255, 0, 0))))
+                    } else if is_key_file {
+                        to_elem(Some(ifa::fa_icon_solid("key").size(16.0).color(color!(0, 255, 0))))
+                    } else if is_file {
+                        to_elem(Some(ifa::fa_icon_solid("lock-open").size(16.0)))
+                        // to_elem(Some(Space::with_width(16)))
+                        // to_elem::<Message, Text>(None)
+                    } else if is_dir {
+                        to_elem(Some(ifa::fa_icon("folder-open").size(16.0)))
+                    } else {
+                        // to_elem(Some(Space::with_width(16)))
+                        to_elem::<Message, Text>(None)
+                    }
+                ).width(17),
+
+                // Display file or directory name
+                // text(&file_meta.name).width(300),
+                column!(
+                    rich_text([span(&file_meta.name).color_maybe(text_color).link_maybe(link.map(Message::LinkClicked)).into()])
+                ).width(300),
+
+                column!(
+                    text(file_meta.type_as_str())
+                ).width(50),
+
+                column!(
+                    if is_file && !is_enc_file && !is_key_file {
+                        to_elem(Some(button(text("encrypt"))
+                            .style(Modern::primary_button())
+                            .on_press(Message::Encrypt)))
+                    } else {
+                        to_elem::<Message, Text>(None)
+                    }
+                    // if is_enc_file {
+                    //     to_elem(Some(button(text("encrypt"))
+                    //         .style(Modern::blue_tinted_button())))
+                    //     // to_elem::<Message, Text>(None)
+                    // } else {
+                    //     to_elem(Some(button(text("encrypt"))
+                    //         .style(Modern::primary_button())
+                    //         .on_press(Message::Encrypt)))
+                    //         // .on_press(Some(Message::Encrypt))))
+                    // }
+                ).width(100),
+
+                column!(
+                    if is_enc_file {
+                        to_elem(Some(button(text("decrypt"))
+                            .style(Modern::warning_button())
+                            .on_press(Message::Decrypt)))
+                            // .on_press(Some(Message::Decrypt))))
+                    } else {
+                        // to_elem(Some(button(text("decrypt"))
+                        //     .style(Modern::warning_button())))
+                        to_elem::<Message, Text>(None)
+                    }
+                ).width(100),
+
+                if is_file {
+                    row!(
+                        Space::with_width(80),
+                        button(text("delete"))
+                            .style(Modern::danger_button())
+                            .on_press(Message::Delete),
+                            // .on_press(Some(Message::Delete)),
+                        Space::with_width(30)
+                    )
+                } else {
+                    row!(to_elem::<Message, Text>(None))
+                    // row!(to_elem::<Option<Message>, Text>(None))
+                }
+            )
+                .align_y(Vertical::Center)
+                .spacing(10)
+        )
+        .width(Length::Fill)
+        .padding(5)
+        .style(move |_theme| container::Style {
+            background: Some(Background::Color(bg_color)),
+            // ... other styling properties
+            ..Default::default()
+        })
+        .into()
     }
 
     fn gen_encrypted_filepath(pb: &PathBuf) -> PathBuf {
