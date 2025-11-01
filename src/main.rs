@@ -197,6 +197,7 @@ pub enum Error {
 mod foo {
     use std::path::PathBuf;
 
+    use anyhow::Context;
     use iced::{alignment::Vertical, color, widget::{button, rich_text, row, span, text, Space, Text}, Element, Task};
     use iced_font_awesome as ifa;
     use iced_modern_theme::Modern;
@@ -205,8 +206,10 @@ mod foo {
         fs::File,
         io::AsyncWriteExt,
     };
-    use tracing::info;
+    use tracing::{error, info};
 
+    use crate::crypto;
+    
     #[allow(dead_code)]
     #[derive(Debug, Clone, Default)]
     pub struct FileMeta {
@@ -235,13 +238,51 @@ mod foo {
     pub fn update(file_meta: &mut FileMeta, message: Message) -> Task<Message> {
         match message {
             Message::Encrypt => {
-                let enc_filename = gen_encrypted_filename(&file_meta.path);
-                info!("encrypting {} to {}", file_meta.name, enc_filename.display());
+                let orig_filepath = file_meta.clone();
+                let enc_filepath = gen_encrypted_filepath(&orig_filepath.path);
+                let key_filepath = gen_key_filepath(&orig_filepath.path);
+                info!("encrypting {} to {}", orig_filepath.name, enc_filepath.display());
                 Task::future(async move {
-                    let _ = write_file(&enc_filename, "hello world encrypted").await;
-                    Message::FileSystemUpdated
-                    // super::Message::RefreshList
+                    match (async move || {
+                        let data = tokio::fs::read(&orig_filepath.path.as_path()).await
+                            .with_context(|| format!("Failed to source file: {}", &orig_filepath.path.display()))?;
+
+                        let (aes_key, enc_data) = crypto::symmetric_encrypt_embed_nonce_enc_data_key(data.as_slice())
+                            .with_context(|| format!("Failed to encrypt file: {}", &orig_filepath.path.display()))?;
+                        write_bin_file(&enc_filepath, enc_data.as_slice()).await
+                            .with_context(|| format!("Failed to write encrypted file: {}", &enc_filepath.display()))?;
+                        write_bin_file(&key_filepath, aes_key.as_slice()).await
+                            .with_context(|| format!("Failed to write key file: {}", &key_filepath.display()))?;
+                        // Message::FileSystemUpdated
+                        // super::Message::RefreshList
+                        Ok::<EncryptStruct, anyhow::Error>(EncryptStruct {
+                            original_filepath: orig_filepath.path.display().to_string(),
+                            encrypted_filepath: enc_filepath.display().to_string(),
+                            key_filepath: key_filepath.display().to_string(),
+                        })
+                    })()
+                    .await {
+                        Ok(x) => {
+                            Message::EncryptResult(Ok(x))
+                        }
+                        Err(e) => {
+                            Message::EncryptResult(Err(format!("{e}")))
+                        }
+                    }
                 })
+            }
+            Message::EncryptResult(Ok(enc_struct)) => {
+                {
+                    // display messages about success
+                    info!("Encrypted {}", enc_struct.original_filepath);
+                    info!("  cipher file: {}", enc_struct.encrypted_filepath);
+                    info!("  key file: {}", enc_struct.key_filepath);
+                }
+                Task::done(Message::FileSystemUpdated)
+            }
+            Message::EncryptResult(Err(msg)) => {
+                error!("Encryption failed: {msg}");
+                Task::none()
             }
             Message::Decrypt => {
                 info!("decrypt {}", file_meta.name);
@@ -349,7 +390,7 @@ mod foo {
             .spacing(10).into()
     }
 
-    fn gen_encrypted_filename(pb: &PathBuf) -> PathBuf {
+    fn gen_encrypted_filepath(pb: &PathBuf) -> PathBuf {
         let mut npb = PathBuf::new();
         if let Some(parent) = pb.parent() {
             npb = npb.join(parent);
@@ -362,6 +403,20 @@ mod foo {
         if let Some(extension) = pb.extension() {
             let _ = npb.set_extension(extension);
         }
+        npb
+    }
+
+    fn gen_key_filepath(pb: &PathBuf) -> PathBuf {
+        let mut npb = PathBuf::new();
+        if let Some(parent) = pb.parent() {
+            npb = npb.join(parent);
+        }
+        if let Some(file_stem) = pb.file_stem() {
+            npb = npb.join(format!("{}_key", file_stem.display()));
+        } else {
+            npb = npb.join("key");
+        }
+        let _ = npb.set_extension("bin");
         npb
     }
 
@@ -392,13 +447,32 @@ mod foo {
         .await.ok()
     }
 
+    async fn write_bin_file(filepath: &PathBuf, content: &[u8]) -> Option<bool> {
+        (async move || {
+            let mut file = File::create(filepath).await?;
+            file. write_all(content).await?;
+            file.flush().await?;
+
+            Ok::<bool, Box<dyn std::error::Error>>(true)
+        })()
+        .await.ok()
+    }
+
     #[derive(Debug, Clone)]
     pub enum Message {
         Encrypt,
+        EncryptResult(Result<EncryptStruct, String>),
         Decrypt,
         Delete,
         FileSystemUpdated,
         LinkClicked(String),
+    }
+
+    #[derive(Debug, Clone)]
+    pub struct EncryptStruct {
+        original_filepath: String,
+        encrypted_filepath: String,
+        key_filepath: String,
     }
 }
 
