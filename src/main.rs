@@ -200,7 +200,7 @@ mod foo {
     use std::path::PathBuf;
 
     use anyhow::Context;
-    use iced::{Background, Color, Element, Length, Task, alignment::Vertical, color, widget::{Space, Text, button, column, container, rich_text, row, span, text}};
+    use iced::{Background, Color, Element, Length, Task, Theme, alignment::Vertical, color, widget::{Space, Text, button, column, container, rich_text, row, span, text}};
     use iced_font_awesome as ifa;
     use iced_modern_theme::Modern;
     use iced_optional_element_shim::to_elem;
@@ -437,6 +437,17 @@ mod foo {
         } else {
             color!(10, 25, 10)
         };
+        let style0 = |_theme: &'_ Theme| container::Style::default();
+        let style1 = |_theme: &'_ Theme| container::Style {
+            background: Some(Background::Color(color!(10, 10, 10))),
+            // ... other styling properties
+            ..Default::default()
+        };
+        let use_style = if index % 2 == 0 {
+            style0
+        } else {
+            style1
+        };
 
         container(
             row!(
@@ -519,11 +530,12 @@ mod foo {
         )
         .width(Length::Fill)
         .padding(5)
-        .style(move |_theme| container::Style {
-            background: Some(Background::Color(bg_color)),
-            // ... other styling properties
-            ..Default::default()
-        })
+        .style(use_style)
+        // .style(move |_theme| container::Style {
+        //     background: Some(Background::Color(bg_color)),
+        //     // ... other styling properties
+        //     ..Default::default()
+        // })
         .into()
     }
 
