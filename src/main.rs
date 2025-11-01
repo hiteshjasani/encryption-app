@@ -198,7 +198,7 @@ mod foo {
     use std::path::PathBuf;
 
     use anyhow::Context;
-    use iced::{alignment::Vertical, color, widget::{button, rich_text, row, span, text, Space, Text}, Element, Task};
+    use iced::{alignment::Vertical, color, widget::{button, column, rich_text, row, span, text, Space, Text}, Element, Task};
     use iced_font_awesome as ifa;
     use iced_modern_theme::Modern;
     use iced_optional_element_shim::to_elem;
@@ -331,46 +331,65 @@ mod foo {
         };
 
         row!(
-            if is_enc_file {
-                to_elem(Some(ifa::fa_icon_solid("lock").size(16.0).color(color!(255, 0, 0))))
-            } else if is_key_file {
-                to_elem(Some(ifa::fa_icon_solid("key").size(16.0).color(color!(0, 255, 0))))
-            } else if is_file {
-                to_elem(Some(ifa::fa_icon_solid("lock-open").size(16.0)))
-                // to_elem(Some(Space::with_width(16)))
-                // to_elem::<Message, Text>(None)
-            } else if is_dir {
-                to_elem(Some(ifa::fa_icon("folder-open").size(16.0)))
-            } else {
-                to_elem(Some(Space::with_width(16)))
-                // to_elem::<Message, Text>(None)
-            },
+            column!(
+                if is_enc_file {
+                    to_elem(Some(ifa::fa_icon_solid("lock").size(16.0).color(color!(255, 0, 0))))
+                } else if is_key_file {
+                    to_elem(Some(ifa::fa_icon_solid("key").size(16.0).color(color!(0, 255, 0))))
+                } else if is_file {
+                    to_elem(Some(ifa::fa_icon_solid("lock-open").size(16.0)))
+                    // to_elem(Some(Space::with_width(16)))
+                    // to_elem::<Message, Text>(None)
+                } else if is_dir {
+                    to_elem(Some(ifa::fa_icon("folder-open").size(16.0)))
+                } else {
+                    // to_elem(Some(Space::with_width(16)))
+                    to_elem::<Message, Text>(None)
+                }
+            ).width(17),
 
             // Display file or directory name
             // text(&file_meta.name).width(300),
-            rich_text([span(&file_meta.name).color_maybe(text_color).link_maybe(link.map(Message::LinkClicked)).into()]).width(300),
+            column!(
+                rich_text([span(&file_meta.name).color_maybe(text_color).link_maybe(link.map(Message::LinkClicked)).into()])
+            ).width(300),
 
-            text(file_meta.type_as_str()).width(50),
+            column!(
+                text(file_meta.type_as_str())
+            ).width(50),
 
-            if is_enc_file {
-                to_elem(Some(button(text("encrypt"))
-                    .style(Modern::blue_tinted_button())))
-            } else {
-                to_elem(Some(button(text("encrypt"))
-                    .style(Modern::primary_button())
-                    .on_press(Message::Encrypt)))
-                    // .on_press(Some(Message::Encrypt))))
-            },
+            column!(
+                if is_file && !is_enc_file && !is_key_file {
+                    to_elem(Some(button(text("encrypt"))
+                        .style(Modern::primary_button())
+                        .on_press(Message::Encrypt)))
+                } else {
+                    to_elem::<Message, Text>(None)
+                }
+                // if is_enc_file {
+                //     to_elem(Some(button(text("encrypt"))
+                //         .style(Modern::blue_tinted_button())))
+                //     // to_elem::<Message, Text>(None)
+                // } else {
+                //     to_elem(Some(button(text("encrypt"))
+                //         .style(Modern::primary_button())
+                //         .on_press(Message::Encrypt)))
+                //         // .on_press(Some(Message::Encrypt))))
+                // }
+            ).width(100),
 
-            if is_enc_file {
-                to_elem(Some(button(text("decrypt"))
-                    .style(Modern::warning_button())
-                    .on_press(Message::Decrypt)))
-                    // .on_press(Some(Message::Decrypt))))
-            } else {
-                to_elem(Some(button(text("decrypt"))
-                    .style(Modern::warning_button())))
-            },
+            column!(
+                if is_enc_file {
+                    to_elem(Some(button(text("decrypt"))
+                        .style(Modern::warning_button())
+                        .on_press(Message::Decrypt)))
+                        // .on_press(Some(Message::Decrypt))))
+                } else {
+                    // to_elem(Some(button(text("decrypt"))
+                    //     .style(Modern::warning_button())))
+                    to_elem::<Message, Text>(None)
+                }
+            ).width(100),
 
             if is_file {
                 row!(
